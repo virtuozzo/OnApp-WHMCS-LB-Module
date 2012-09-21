@@ -22,7 +22,7 @@ function moduleInit() {
 function onapp_load_balancer_ConfigOptions() {
 	global $templates_compiledir, $_LANG;
 
-	// Check wrapper
+	// check wrapper
 	if( ! defined( 'ONAPP_WRAPPER_INIT' ) ) {
 		return array(
 			'' => array( 'Description' => '<b>' . $_LANG[ 'onapplbwrappernotfound' ] . '</b> ' . realpath( ROOTDIR ) . '/includes' )
