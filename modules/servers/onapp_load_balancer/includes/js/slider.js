@@ -1,5 +1,5 @@
 function create_slider_html( max, min, step, name ) {
-	return '<div class="input-with-slider"><div class="slider" style="float:left; margin:5px 15px 0 5px; width:200px;" max="' + max + '" min="' + min + '" step="' + step + '" target="' + name + '" width="200"></div></div>';
+	return '<div class="input-with-slider"><div class="slider" style="float:left; margin:5px 15px 0 5px; width:200px;" max="' + max + '" min="' + min + '" step="' + step + '" target="' + name + '" width="200"></div></div>'; 
 }
 
 var init_sliders = function () {

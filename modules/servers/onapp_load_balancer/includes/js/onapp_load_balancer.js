@@ -111,11 +111,8 @@ $( "input[name^='lbtypes']" ).live( 'change', function () {
 	SelectedType();
 } );
 
-
-
 function buildFields( data ) {
 	$( 'div#onapplb' ).html( data );
-
 	$( '.sld' ).each( function ( i, val ) {
 		var tmp = create_slider_html( 1000, 0, 1, this.name )
 		$( val ).before( tmp );
