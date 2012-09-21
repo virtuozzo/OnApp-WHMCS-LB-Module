@@ -44,12 +44,4 @@ class OnApp_LoadBalancer_Module {
 
 		return $obj;
 	}
-
-	private function buildArray( $data ) {
-		$tmp = array();
-		foreach( $data as $item ) {
-			$tmp[ $item->id ] = $item->label;
-		}
-		return $tmp;
-	}
 }
