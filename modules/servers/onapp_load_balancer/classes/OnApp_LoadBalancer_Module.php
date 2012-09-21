@@ -25,7 +25,6 @@ class OnApp_LoadBalancer_Module {
 	}
 
 	public function getTemplates() {
-		return array();
 		return $this->getOnAppObject( 'OnApp_Template' )->getList();
 	}
 
