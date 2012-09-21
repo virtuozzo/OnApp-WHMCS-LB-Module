@@ -130,7 +130,7 @@ function onapp_load_balancer_ConfigOptions() {
 		$smarty->assign( 'serversData', $serversData );
 	}
 
-	$html .= $smarty->fetch( $smarty->template_dir . 'srv.tpl' );
+	$html .= $smarty->fetch( $smarty->template_dir . 'admin.tpl' );
 	$html .= PHP_EOL . PHP_EOL;
 
 	if( isset( $_GET[ 'servergroup' ] ) ) {
