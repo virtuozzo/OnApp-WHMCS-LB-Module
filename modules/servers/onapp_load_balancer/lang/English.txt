@@ -2,9 +2,9 @@
 $_LANG[ 'onapplbservernotdefined' ] = 'Not defined';
 $_LANG[ 'onapplberrcantfoundactiveserverforgroup' ] = 'There are no active OnApp Loadbalancer servers for this Server group. Please choose another Server Group and save the changes';
 $_LANG[ 'onapplbservers' ] = 'Servers';
-$_LANG[ 'onapplbnoserverselected' ] = 'There are no active Load Balancer Server Selected. Please choose some Server and save the changes';
+$_LANG[ 'onapplbnoserverselected' ] = '<b>There are no active Load Balancer Server Selected. Please choose some Server and save the changes</b>';
 $_LANG[ 'onapplberrcantfoundactiveserver' ] = 'Can\'t found active OnApp Load Balancer servers';
-$_LANG[ 'onapplbwrongserverconfig' ] = 'Wrong OnApp Load Balancer Server Configuration';
+$_LANG[ 'onapplbwrongserverconfig' ] = '<b>Wrong OnApp Load Balancer Server Configuration';
 $_LANG[ 'onapplbdefaultport' ] = 'Default Port';
 $_LANG[ 'onapplbclusterconfiguration' ] = 'Cluster Configuration';
 $_LANG[ 'onapplberrorinvalidconfigjson' ] = 'Invalid JSON in database';
@@ -41,3 +41,16 @@ $_LANG[ 'onapplbmorethen' ] = 'more then';
 $_LANG[ 'onapplbremove' ] = 'remove';
 $_LANG[ 'onapplbiffreeram' ] = 'if free RAM';
 $_LANG[ 'onapplbmorethen' ] = 'more then';
+
+
+
+$_LANG[ 'onapplbsettings' ] = '<b>Settings</b>';
+$_LANG[ 'onapplballowedtypes' ] = 'Allowed types';
+$_LANG[ 'onapplballowedtypecluster' ] = 'Cluster';
+$_LANG[ 'onapplballowedtypeautoscaling' ] = 'AutoScaling';
+
+
+$_LANG[ 'onappuserserrorholder' ] = '<b style="color:red;">%s</b>';
+$_LANG[ 'onappuserserrornoserveringroup' ] = 'There are no servers in selected server group';
+$_LANG[ 'onappusersjsloadingdata' ] = '<div class="loading">Loading data...</div>';
+$_LANG[ 'onappusersjsloadingdataerror' ] = '<div class="loading-error">Something went wrong. Reload the page please.</div> Error code: ';

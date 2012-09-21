@@ -1,5 +1,120 @@
 <?php
 
+
+class OnApp_LoadBalancer_Module {
+	private $server;
+
+	public function __construct( array $params ) {
+		if( ! empty( $params ) ) {
+			$this->server       = new stdClass;
+			$this->server->ip   = empty( $params[ 'serverip' ] ) ? $params[ 'serverhostname' ] : $params[ 'serverip' ];
+			$this->server->user = $params[ 'serverusername' ];
+			$this->server->pass = $params[ 'serverpassword' ];
+		}
+	}
+
+	public function getHypervisors() {
+		return $this->getOnAppObject( 'OnApp_Hypervisor' )->getList();
+	}
+
+	public function getHypervisorZones() {
+		return $this->getOnAppObject( 'OnApp_HypervisorZone' )->getList();
+	}
+
+	public function getNetworkZones() {
+		return $this->getOnAppObject( 'OnApp_NetworkZone' )->getList();
+	}
+
+	public function getTemplates() {
+		return array();
+		return $this->getOnAppObject( 'OnApp_Template' )->getList();
+	}
+
+	public function getJSLang() {
+		global $_LANG;
+		return json_encode( $_LANG );
+	}
+
+
+
+
+
+
+	///////////////////////////////////////////////////////////////
+	/**
+	 * @param string $className
+	 *
+	 * @return OnApp
+	 */
+	private function getOnAppObject( $className ) {
+		$obj = new $className;
+		$obj->auth( $this->server->ip, $this->server->user, $this->server->pass );
+
+		return $obj;
+	}
+
+	private function buildArray( $data ) {
+		$tmp = array();
+		foreach( $data as $item ) {
+			$tmp[ $item->id ] = $item->label;
+		}
+		return $tmp;
+	}
+
+
+
+
+
+
+
+
+	/*
+	public function getUserGroups() {
+		$data = $this->getOnAppObject( 'OnApp_UserGroup' )->getList();
+		return $this->buildArray( $data );
+	}
+
+	public function getRoles() {
+		$data = $this->getOnAppObject( 'OnApp_Role' )->getList();
+		return $this->buildArray( $data );
+	}
+
+	public function getBillingPlans() {
+		$data = $this->getOnAppObject( 'OnApp_BillingPlan' )->getList();
+		return $this->buildArray( $data );
+	}
+
+	public function getLocales() {
+		$tmp = array();
+		foreach( $this->getOnAppObject( 'OnApp_Locale' )->getList() as $locale ) {
+			if( empty( $locale->name ) ) {
+				continue;
+			}
+			$tmp[ $locale->code ] = $locale->name;
+		}
+
+		return $tmp;
+	}
+
+	public function getOnAppObject( $class ) {
+		$obj = new $class;
+		$obj->auth( $this->server->ip, $this->server->user, $this->server->pass );
+
+		return $obj;
+	}
+
+	private function buildArray( $data ) {
+		$tmp = array();
+		foreach( $data as $item ) {
+			$tmp[ $item->_id ] = $item->_label;
+		}
+		return $tmp;
+	}
+	*/
+}
+
+//check code below
+
 if( ! function_exists( 'emailtpl_template' ) ) {
 	require_once dirname( dirname( $_SERVER[ 'SCRIPT_FILENAME' ] ) ) . '/includes/functions.php';
 }
@@ -33,74 +148,6 @@ class OnAppLoadBalancer {
 	 */
 	public static function get_value( $value ) {
 		return $_GET[ $value ] ? $_GET[ $value ] : ( $_POST[ $value ] ? $_POST[ $value ] : null );
-	}
-
-	/**
-	 * Init OnApp PHP wrapper
-	 */
-	public static function init_wrapper() {
-		if( ! defined( 'ONAPP_FILE_NAME' ) ) {
-			define( "ONAPP_FILE_NAME", "onappcdn.php" );
-		}
-
-		if( ! defined( 'ONAPP_WRAPPER_INIT' ) ) {
-			define( 'ONAPP_WRAPPER_INIT', dirname( __FILE__ ) . '/../../../includes/wrapper/OnAppInit.php' );
-		}
-
-		if( file_exists( ONAPP_WRAPPER_INIT ) ) {
-			require_once ONAPP_WRAPPER_INIT;
-		}
-		else {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Load $_LANG from language file
-	 */
-	public static function loadloadbalancer_language() {
-		global $_LANG;
-
-		$dir = dirname( __FILE__ ) . '/lang/';
-
-		if( ! file_exists( $dir ) ) {
-			return;
-		}
-
-		$dh = opendir( $dir );
-
-		while( false !== $file2 = readdir( $dh ) ) {
-			if( ! is_dir( '' . 'lang/' . $file2 ) ) {
-				$pieces = explode( '.', $file2 );
-				if( $pieces[ 1 ] == 'txt' ) {
-					$arrayoflanguagefiles[ ] = $pieces[ 0 ];
-					continue;
-				}
-				continue;
-			}
-		}
-
-		closedir( $dh );
-
-		if( ! isset( $_SESSION[ 'Language' ] ) ) {
-			$_SESSION[ 'Language' ] = 'English';
-		}
-
-		$language = $_SESSION[ 'Language' ];
-
-		if( ! in_array( $language, $arrayoflanguagefiles ) ) {
-			$language = 'English';
-		}
-
-		if( file_exists( dirname( __FILE__ ) . '/lang/' . $language . '.txt' ) ) {
-			ob_start();
-			include dirname( __FILE__ ) . '/lang/' . $language . '.txt';
-			$templang = ob_get_contents();
-			ob_end_clean();
-			eval ( $templang );
-		}
 	}
 
 	/**
@@ -138,13 +185,13 @@ class OnAppLoadBalancer {
             `auto_scaling_in_memory_attributes_for_minutes` int(11) DEFAULT NULL
             ) DEFAULT CHARSET=utf8;' );
 
-		define( "CREATE_TABLE_ONAPPLBCLIENTS", "CREATE TABLE IF NOT EXISTS `tblonapplbclients` (
+		define( 'CREATE_TABLE_ONAPPLBCLIENTS', 'CREATE TABLE IF NOT EXISTS `tblonapplbclients` (
             `service_id` int(11) NOT NULL,
             `client_id` int(11) NOT NULL,
             `onapp_user_id` int(11) NOT NULL,
             `password` varchar(255) NOT NULL,
             `email` varchar(255) NOT NULL
-            ) DEFAULT CHARSET=utf8;" );
+            ) DEFAULT CHARSET=utf8;' );
 
 		if( ! full_query( CREATE_TABLE_ONAPPLBCLIENTS, $whmcsmysql ) ) {
 			return array(
@@ -165,24 +212,24 @@ class OnAppLoadBalancer {
 	 * Get list of onapp cdn servers
 	 */
 	public static function getservers() {
-		$product_id = self::get_value( 'id' );
+		$productID = self::get_value( 'id' );
 
 		$sql = 'SELECT
-    tblservers.*,
-    tblservergroupsrel.groupid,
-    tblproducts.servergroup
-FROM
-    tblservers
-    LEFT JOIN tblservergroupsrel ON
-        tblservers.id = tblservergroupsrel.serverid
-    LEFT JOIN tblproducts ON
-        tblproducts.id = $product_id
-WHERE
-    tblservers.disabled = 0
-    AND tblservers.type = "onapploadbalancer"';
+					tblservers.*,
+					tblservergroupsrel.groupid,
+					tblproducts.servergroup
+				FROM
+					tblservers
+					LEFT JOIN tblservergroupsrel ON
+						tblservers.id = tblservergroupsrel.serverid
+					LEFT JOIN tblproducts ON
+						tblproducts.id = :productID
+				WHERE
+					tblservers.disabled = 0
+					AND tblservers.type = "onapp"';
+		$sql = str_replace( ':productID', $productID, $sql );
 
 		$sql_servers_result = full_query( $sql );
-
 		$servers = array();
 		while( $server = mysql_fetch_assoc( $sql_servers_result ) ) {
 			if( is_null( $server[ 'groupid' ] ) ) {

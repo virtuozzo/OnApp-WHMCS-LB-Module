@@ -1,254 +1,160 @@
 <?php
 
-require_once dirname( __FILE__ ) . '/classes/LoadBalancer.php';
+moduleInit();
 
-OnAppLoadBalancer::loadloadbalancer_language();
-OnAppLoadBalancer::init_wrapper();
-if( ! defined( 'ONAPPLOADBALANCER_FILE_NAME' ) ) {
-	define( 'ONAPPLOADBALANCER_FILE_NAME', 'onapploadbalancer.php' );
+function moduleInit() {
+	if( ! defined( 'ONAPP_WRAPPER_INIT' ) ) {
+		define( 'ONAPP_WRAPPER_INIT', dirname( dirname( $_SERVER[ 'SCRIPT_FILENAME' ] ) ) . '/includes/wrapper/OnAppInit.php' );
+
+		if( file_exists( ONAPP_WRAPPER_INIT ) ) {
+			require_once ONAPP_WRAPPER_INIT;
+		}
+	}
+
+	if( ! defined( 'ONAPPLOADBALANCER_FILE_NAME' ) ) {
+		define( 'ONAPPLOADBALANCER_FILE_NAME', 'onapp_load_balancer.php' );
+	}
+
+	require_once dirname( __FILE__ ) . '/classes/OnApp_LoadBalancer_Module.php';
+	getLang();
 }
 
 function onapp_load_balancer_ConfigOptions() {
-	global $packageconfigoption, $_GET, $_POST, $_LANG;
-
-	// Create Tables
-	$table_result = OnAppLoadBalancer::createTables();
-
-	if( $table_result[ 'error' ] ) {
-		return array(
-			sprintf(
-				'<font color="red"><b>%s</b></font>',
-				$table_result[ 'error' ]
-			) => array()
-		);
-	}
-
-	// Localization
-	$js_localization_array = array(
-		'servers',
-		'billingplans',
-		'timezones',
-		'usergroups',
-		'userroles',
-		'usersproperties',
-		'cdnresourceproperties',
-		'servernotdefined',
-		'defaultport',
-		'clusterconfiguration',
-		'instance',
-		'hvzone',
-		'hv',
-		'networkzone',
-		'portspeed',
-		'type',
-		'autoscaling',
-		'cluster',
-		'clusternodes',
-		'clusternodetemplates',
-		'imagetemplate',
-		'minnodamount',
-		'maxnodamount',
-		'clusternodeparameters',
-		'memory',
-		'cpus',
-		'cpuguarantee',
-		'ratelimit',
-		'autoscaleoutparams',
-		'autoscaleinparams',
-		'ifcpuusage',
-		'isabove',
-		'minutes',
-		'for',
-		'add',
-		'morevms',
-		'islessthen',
-		'morethen',
-		'remove',
-		'iffreeram',
-		'morethen',
-	);
-
-	$js_localization_string = '';
-
-	foreach( $js_localization_array as $string ) {
-		if( isset( $_LANG[ 'onapplb' . $string ] ) ) {
-			$js_localization_string .= '    LANG[ \'onapplb' . $string . '\' ] = \'' . $_LANG[ 'onapplb' . $string ] . '\';' . PHP_EOL;
-		}
-	}
-
-	// Getting Servers
-	$loadbalancerservers = OnAppLoadBalancer::getservers();
-
-	// Error check
-	if( count( $loadbalancerservers ) == 0 ) {
-		$configarray[ '' ][ 'Description' ] .= '  <b>' . $_LANG[ 'onapplberrcantfoundactiveserver' ] . '</b>';
-		return $configarray;
-	}
-
-	// Sellect servers of a group
-	foreach( $loadbalancerservers as $key => $value ) {
-		if( $value[ 'groupid' ] != $value[ 'servergroup' ] ) {
-			unset( $loadbalancerservers[ $key ] );
-		}
-	}
-
-	// Error check
-	if( count( $loadbalancerservers ) == 0 ) {
-		$configarray[ '' ][ 'Description' ] .= '  <b>' . $_LANG[ 'onapplberrcantfoundactiveserverforgroup' ] . '</b>';
-		return $configarray;
-	}
-
-	// Javascript
-	$css             = '<link rel="stylesheet" type="text/css" href="../modules/servers/onapploadbalancer/includes/css/admin_style.css" />';
-	$base_javascript = '<script type="text/javascript" src="../modules/servers/onapploadbalancer/includes/js/base.js"></script>
-        <script type="text/javascript">
-            var servers = ' . json_encode( $loadbalancerservers ) . '
-            var LANG = [];' . $js_localization_string . '</script>';
-
-	$javascript = $base_javascript;
-	$server_id = $packageconfigoption[ 1 ];
-
-	if( $server_id ) {
-		$javascript .= '<script type="text/javascript" src="../modules/servers/onapploadbalancer/includes/js/onapploadbalancer.js"></script>
-                        <script type="text/javascript" src="../modules/servers/onapploadbalancer/includes/js/slider.js"></script> ';
-	}
-
-	// Passing options to the view
-	$configarray = array(
-		'&nbsp'      => array(
-			'Type' => 'text'
-		),
-		'&nbsp'      => array(
-			'Type' => 'text'
-		),
-		'javascript' => array(
-			'Type'        => 'text',
-			'Description' => PHP_EOL . $javascript,
-		)
-	);
-
-	// Error check
-	if( is_null( $server_id ) || $server_id == 0 || ! in_array( $server_id, array_keys( $loadbalancerservers ) ) ) {
-		$configarray[ '' ][ 'Description' ] .= '  <b>' . $_LANG[ 'onapplbnoserverselected' ] . '</b>';
-		return $configarray;
-	}
-
-	// check config json
-	if( $packageconfigoption[ 2 ] != '' && ! json_decode( htmlspecialchars_decode( $packageconfigoption[ 2 ] ) ) ) {
-		$configarray[ '' ][ 'Description' ] .= '  <b>' . $_LANG[ 'onapplberrorinvalidconfigjson' ] . '</b>';
-		return $configarray;
-	}
+	global $templates_compiledir, $_LANG;
 
 	// Check wrapper
-	// todo fix path
-	if( ! file_exists( ONAPP_WRAPPER_INIT ) ) {
-		$configarray[ '' ][ 'Description' ] .= "<b>" . $_LANG[ 'onapplbwrappernotfound' ] . "</b> " . realpath( dirname( __FILE__ ) . '/../../../' ) . '/includes';
-		return $configarray;
-	}
-
-	// Get OnApp Instance
-	$server = $loadbalancerservers[ $server_id ];
-
-	$ipaddress = $server[ 'ipaddress' ];
-	$hostname  = $server[ 'hostname' ];
-	$username  = $server[ 'username' ];
-	$password  = $server[ 'password' ];
-
-	if( $username && $password && ( $hostname || $ipaddress ) ) {
-		$onapp_instance = new OnApp_Factory( ( $ipaddress ) ? $ipaddress : $hostname, $username, $password );
-	}
-
-	// Error check
-	if( ! isset( $onapp_instance ) || ! $onapp_instance->_is_auth ) {
-		$configarray[ '' ][ 'Description' ] .= ' <b> ' . $_LANG[ 'onapplbwrongserverconfig' ] . '</b>';
-		$configarray[ 'javascript' ] = array(
-			'Type'        => 'text',
-			'Description' => PHP_EOL . $base_javascript
+	if( ! defined( 'ONAPP_WRAPPER_INIT' ) ) {
+		return array(
+			'' => array( 'Description' => '<b>' . $_LANG[ 'onapplbwrappernotfound' ] . '</b> ' . realpath( ROOTDIR ) . '/includes' )
 		);
-		return $configarray;
 	}
 
-	// Load Hypervisor Zones
-	if( $onapp_instance ) {
-		$hv_zone = $onapp_instance->factory( 'HypervisorZone' );
+	include_once ROOTDIR . '/includes/smarty/Smarty.class.php';
+	$smarty = new Smarty();
+	$compile_dir = file_exists( $templates_compiledir ) ? $templates_compiledir : ROOTDIR . '/' . $templates_compiledir;
+	$smarty->compile_dir = $compile_dir;
+	$smarty->template_dir = dirname( __FILE__ ) . '/includes/html/';
+	$smarty->assign( 'LANG', $_LANG );
 
-		$hv_zones = $hv_zone->getList();
+	$serverGroupID = isset( $_GET[ 'servergroup' ] ) ? $_GET[ 'servergroup' ] : (int)$GLOBALS[ 'servergroup' ];
+	$sql         = 'SELECT
+						srv.`id`,
+						srv.`name`,
+						srv.`ipaddress` AS serverip,
+						srv.`hostname` AS serverhostname,
+						srv.`username` AS serverusername,
+						srv.`password` AS serverpassword,
+						grp.`id` AS groupid
+					FROM
+						`tblservers` AS srv
+					LEFT JOIN
+						`tblservergroupsrel` AS rel ON srv.`id` = rel.`serverid`
+					LEFT JOIN
+						`tblservergroups` AS grp ON grp.`id` = rel.`groupid`
+					WHERE
+						grp.`id` = :serverGroupID';
+	$sql         = str_replace( ':serverGroupID', $serverGroupID, $sql );
 
-		$_hv_zones[ 0 ] = 'autoselect';
-		foreach( $hv_zones as $zone ) {
-			$_hv_zones[ $zone->_id ] = $zone->_label;
-		}
+	$html        = '';
+	$serversData = array();
+	$res         = full_query( $sql );
+	$module      = new OnApp_LoadBalancer_Module( array() );
+	if( mysql_num_rows( $res ) == 0 ) {
+		$smarty->assign( 'NoServers', sprintf( $_LANG[ 'onappuserserrorholder' ], $_LANG[ 'onappuserserrornoserveringroup' ] ) );
 	}
+	else {
+		while( $serverConfig = mysql_fetch_assoc( $res ) ) {
+			//Error if server adress (IP and hostname) not set
+			if( empty( $serverConfig[ 'serverip' ] ) && empty( $serverConfig[ 'serverhostname' ] ) ) {
+				$msg = sprintf( $_LANG[ 'onapperrcantfoundadress' ] );
 
-	// Load Image Templates
-	if( $onapp_instance ) {
-		$tpl = $onapp_instance->factory( 'Template' );
-
-		$tpls = $tpl->getList();
-
-		$_tpls[ 0 ] = 'autoselect';
-		foreach( $tpls as $tpl ) {
-			if( $tpl->_operating_system != 'freebsd' && $tpl->_operating_system != 'windows' ) {
-				$_tpls[ $tpl->_id ] = htmlspecialchars( addslashes( preg_replace( '/\r\n|\n|\r/', " ", $tpl->_label ) ) );
+				$data[ 'Name' ]                       = $serverConfig[ 'name' ];
+				$data[ 'NoAddress' ]                  = sprintf( $_LANG[ 'onappuserserrorholder' ], $msg );
+				$serversData[ $serverConfig[ 'id' ] ] = $data;
+				continue;
 			}
-		}
-	}
+			$serverConfig[ 'serverpassword' ] = decrypt( $serverConfig[ 'serverpassword' ] );
 
-	// Load Hypervisors
-	if( $onapp_instance ) {
-		$hv = $onapp_instance->factory( 'Hypervisor' );
+			$module = new OnApp_LoadBalancer_Module( $serverConfig );
+			$data   = array();
 
-		$hvs = $hv->getList();
+			// get hypervisor zones
+			$data[ 'HypervisorZones' ] = array();
+			foreach( $module->getHypervisorZones() as $zone ) {
+				$data[ 'HypervisorZones' ][ $zone->id ] = $zone->label;
+			}
 
-		$hv_ids        = array();
-		$js_hvZonesRel = array();
-		$js_hvOptions  = array( 0 => 'autoselect' );
-
-		if( ! empty( $hvs ) ) {
-			foreach( $hvs as $_hv ) {
-				if( $_hv->online == true && $_hv->hypervisor_group_id ) {
-					$hv_ids[ $_hv->id ] = array(
-						'label' => $_hv->label
+			// get hypervisors
+			$data[ 'Hypervisors' ] = array();
+			foreach( $module->getHypervisors() as $hv ) {
+				if( $hv->online && $hv->hypervisor_group_id ) {
+					$data[ 'Hypervisors' ][ $hv->id ] = array(
+						'label' => $hv->label,
+						'hypervisorzone' => $hv->hypervisor_group_id
 					);
-
-					$js_hvOptions[ $_hv->_id ]  = $_hv->_label;
-					$js_hvZonesRel[ $_hv->_id ] = $_hv->_hypervisor_group_id;
 				}
 			}
-		}
-	}
 
-	// Load Network Zone
-	if( $onapp_instance ) {
-		$network_zone = $onapp_instance->factory( 'NetworkZone' );
-
-		$network_zones = $network_zone->getList();
-
-		$js_nzOptions = array( 0 => 'autoselect' );
-
-		if( ! empty( $network_zones ) ) {
-			foreach( $network_zones as $_nz ) {
-				$js_nzOptions[ $_nz->_id ] = $_nz->_label;
+			// get network zones
+			$data[ 'NetworkZones' ] = array();
+			foreach( $module->getNetworkZones() as $nz ) {
+				$data[ 'NetworkZones' ][ $nz->id ] = $nz->label;
 			}
+
+			// common data
+			$data[ 'Name' ] = $serverConfig[ 'name' ];
+			$data[ 'GID' ] = $serverConfig[ 'groupid' ];
+			$serversData[ 'Servers' ][ $serverConfig[ 'id' ] ] = $data;
+			unset( $data );
 		}
+
+		$sql = 'SELECT
+					prod.`configoption1` AS options,
+					prod.`servergroup` AS `group`
+				FROM
+					`tblproducts` AS prod
+				WHERE
+					prod.`id` = :id';
+		$sql                  = str_replace( ':id', (int)$_GET[ 'id' ], $sql );
+		$results              = full_query( $sql );
+		$results              = mysql_fetch_assoc( $results );
+		$results[ 'options' ] = htmlspecialchars_decode( $results[ 'options' ] );
+
+		//$serversData[ 'Group' ] = $results[ 'group' ];
+		if( ! empty( $results[ 'options' ] ) ) {
+			$results[ 'options' ] = json_decode( $results[ 'options' ], true );
+			//$serversData += $results[ 'options' ];
+			$serversData[ 'Group' ][ $results[ 'group' ] ] = $results[ 'options' ];
+		}
+
+		$smarty->assign( 'serversData', $serversData );
 	}
 
-	// Passing additional javascript variables
-	$javascript .= '
-        <script type="text/javascript">
-            hvZones     = ' . json_encode( $_hv_zones ) . '
-            hvZonesRel  = ' . json_encode( $js_hvZonesRel ) . '
-            hv          = ' . json_encode( $js_hvOptions ) . '
-            nz          = ' . json_encode( $js_nzOptions ) . '
-            tpl         = ' . json_encode( $_tpls ) . '
-            css         = ' . $css . '
-        </script>';
+	$html .= $smarty->fetch( $smarty->template_dir . 'srv.tpl' );
+	$html .= PHP_EOL . PHP_EOL;
 
-	$configarray[ 'javascript' ] = array(
-		'Type'        => 'text',
-		'Description' => PHP_EOL . $javascript
-	);
-	return $configarray;
+	if( isset( $_GET[ 'servergroup' ] ) ) {
+		ob_end_clean();
+		exit( $html );
+	}
+	else {
+		$js = '<script type="text/javascript" src="../modules/servers/onapp_load_balancer/includes/js/jquery.json-2.2.min.js"></script>
+			<script type="text/javascript" src="../modules/servers/onapp_load_balancer/includes/js/slider.js"></script>
+			<script type="text/javascript" src="../modules/servers/onapp_load_balancer/includes/js/onapp_load_balancer.js"></script>
+			<script type="text/javascript">
+				var LANG = ' . $module->getJSLang() . ';
+			</script>';
+
+		$config = array(
+			''  => array(
+				'Description' => $html
+			),
+			'js'  => array(
+				'Description' => $js
+			),
+		);
+	}
+	return $config;
 }
 
 function onapp_load_balancer_CreateAccount( $params ) {
@@ -264,4 +170,47 @@ function onapp_load_balancer_UnsuspendAccount( $params ) {
 }
 
 function onapp_load_balancer_ClientArea( $params ) {
+}
+
+function getLang() {
+	global $_LANG;
+
+	$dir = dirname( __FILE__ ) . '/lang/';
+
+	if( ! file_exists( $dir ) ) {
+		return;
+	}
+
+	$dh = opendir( $dir );
+
+	while( false !== $file2 = readdir( $dh ) ) {
+		if( ! is_dir( '' . 'lang/' . $file2 ) ) {
+			$pieces = explode( '.', $file2 );
+			if( $pieces[ 1 ] == 'txt' ) {
+				$arrayoflanguagefiles[ ] = $pieces[ 0 ];
+				continue;
+			}
+			continue;
+		}
+	}
+
+	closedir( $dh );
+
+	if( ! isset( $_SESSION[ 'Language' ] ) ) {
+		$_SESSION[ 'Language' ] = 'English';
+	}
+
+	$language = $_SESSION[ 'Language' ];
+
+	if( ! in_array( $language, $arrayoflanguagefiles ) ) {
+		$language = 'English';
+	}
+
+	if( file_exists( dirname( __FILE__ ) . '/lang/' . $language . '.txt' ) ) {
+		ob_start();
+		include dirname( __FILE__ ) . '/lang/' . $language . '.txt';
+		$templang = ob_get_contents();
+		ob_end_clean();
+		eval ( $templang );
+	}
 }
