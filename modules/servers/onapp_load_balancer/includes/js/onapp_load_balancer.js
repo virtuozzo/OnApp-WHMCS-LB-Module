@@ -1,5 +1,5 @@
 $( document ).ready( function () {
-	$( 'head' ).append( '<link rel="stylesheet" type="text/css" href="../modules/servers/onapp_load_balancer/includes/css/admin_style.css" />' );
+	$( 'head' ).append( '<link rel="stylesheet" type="text/css" href="../modules/servers/onapp_load_balancer/includes/css/style.css" />' );
 
 	var table = '<div id="onapplb">' + $( 'table' ).eq( 5 ).find( 'table:first' ).parent().html() + '</div>';
 	$( 'table' ).eq( 5 ).remove();
