@@ -53,4 +53,4 @@ $_LANG[ 'onapplballowedtypeautoscaling' ] = 'AutoScaling';
 $_LANG[ 'onappuserserrorholder' ] = '<b style="color:red;">%s</b>';
 $_LANG[ 'onappuserserrornoserveringroup' ] = 'There are no servers in selected server group';
 $_LANG[ 'onappusersjsloadingdata' ] = '<div class="loading">Loading data...</div>';
-$_LANG[ 'onappusersjsloadingdataerror' ] = '<div class="loading-error">Something went wrong. Reload the page please.</div> Error code: ';
+$_LANG[ 'onappusersjsloadingdataerror' ] = '<div class="loading-error">Something went wrong. Reload the page please.</div> Error code:  ';
